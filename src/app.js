@@ -38,5 +38,15 @@ app.use(express.static('public'));
 // Commonly used for authentication (JWT in cookies)
 app.use(cookieParser());
 
+
+//routes importing
+import userRouter from './routes/user.routes.js';
+
+
+
+//routes declarition
+app.use("/api/v1/users",userRouter);
+//http://localhost:8000/api/v1/users/register
+
 // Export app so it can be used in server/index.js or main file
 export { app };

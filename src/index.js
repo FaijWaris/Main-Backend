@@ -1,6 +1,7 @@
 // require('dotenv').config({path:'./.env'});  
 // consistency ko break krta , lekin upr wale code me chl sb jayega but 
 //isse jyada ek aur hai 
+import { app } from "./app.js";
 import dotenv from "dotenv";
 import connectDB from "./db/index.js";
 dotenv.config({path:'./.env'});
