@@ -31,4 +31,38 @@ const uploadOnCloudinary=async(localFilePath)=>{
         return null;
     }
 }
-export {uploadOnCloudinary};    
+export const registerUser = async (req, res, next) => {
+  try {
+    const { fullname, username, email, password } = req.body;
+
+    if ([fullname, username, email, password].some(
+      field => !field || field.trim() === ""
+    )) {
+      throw new ApiError("All fields are required", 400);
+    }
+
+    const existedUser = await User.findOne({
+      $or: [{ username }, { email }],
+    });
+
+    if (existedUser) {
+      throw new ApiError("User already exists", 409);
+    }
+
+    const avatarLocalPath = req.files?.avatar?.[0]?.path;
+    const coverImageLocalPath = req.files?.coverImage?.[0]?.path || null;
+
+    if (!avatarLocalPath) {
+      throw new ApiError("Avatar is required", 400);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Validation passed",
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+;    
