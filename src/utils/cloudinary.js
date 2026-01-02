@@ -1,68 +1,59 @@
-import {v2 as cloudinary} from 'cloudinary';
-import fs from 'fs';
+import { v2 as cloudinary } from "cloudinary";
+import fs from "fs";
+import { ApiError } from "./ApiError.js";
 
+const ensureCloudinaryCredentials = () => {
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim();
+    const apiKey = process.env.CLOUDINARY_API_KEY?.trim();
+    const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim();
 
-
-(async function() {
-
-    // Configuration
-    cloudinary.config({ 
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
-        api_key:process.env.CLOUDINARY_API_KEY,
-        api_secret:process.env.CLOUDINARY_API_SECRET,
- 
-    })});
-
-const uploadOnCloudinary=async(localFilePath)=>{
-    try {
-        if (!localFilePath) return null;
-        // Upload file to Cloudinary
-        const response=await cloudinary.uploader.upload(localFilePath,{
-            resource_type:'auto',
-            
-        
-            
-        });
-        // file upload succesfully
-        console.log("file is uploadded on cloudinary",response.url);
-        return response;
-    } catch (error) {
-        fs.unlinkSync(localFilePath);// delete the file from local storage
-        return null;
-    }
-}
-export const registerUser = async (req, res, next) => {
-  try {
-    const { fullname, username, email, password } = req.body;
-
-    if ([fullname, username, email, password].some(
-      field => !field || field.trim() === ""
-    )) {
-      throw new ApiError("All fields are required", 400);
+    if (!cloudName || !apiKey || !apiSecret) {
+        throw new ApiError(500, "Cloudinary environment variables are missing");
     }
 
-    const existedUser = await User.findOne({
-      $or: [{ username }, { email }],
+    cloudinary.config({
+        cloud_name: cloudName,
+        api_key: apiKey,
+        api_secret: apiSecret,
+        secure: true,
     });
-
-    if (existedUser) {
-      throw new ApiError("User already exists", 409);
-    }
-
-    const avatarLocalPath = req.files?.avatar?.[0]?.path;
-    const coverImageLocalPath = req.files?.coverImage?.[0]?.path || null;
-
-    if (!avatarLocalPath) {
-      throw new ApiError("Avatar is required", 400);
-    }
-
-    res.status(201).json({
-      success: true,
-      message: "Validation passed",
-    });
-
-  } catch (error) {
-    next(error);
-  }
 };
-;    
+
+const uploadOnCloudinary = async (localFilePath) => {
+    if (!localFilePath) return null;
+
+    try {
+        ensureCloudinaryCredentials();
+
+        // ✅ Upload file to Cloudinary
+        const response = await cloudinary.uploader.upload(localFilePath, {
+            resource_type: "auto",
+        });
+
+        // ✅ File successfully uploaded → delete local file
+        if (fs.existsSync(localFilePath)) {
+            fs.unlinkSync(localFilePath);
+        }
+
+        return response;
+
+    } catch (error) {
+        // ❌ Upload failed → still clean up local file
+        if (fs.existsSync(localFilePath)) {
+            fs.unlinkSync(localFilePath);
+        }
+
+        if (error?.http_code === 401) {
+            throw new ApiError(
+                500,
+                "Cloudinary credentials were rejected. Verify CLOUDINARY_* values."
+            );
+        }
+
+        throw new ApiError(500, error?.message || "Cloudinary upload failed");
+    }
+};
+
+export { uploadOnCloudinary };
+
+

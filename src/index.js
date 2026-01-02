@@ -1,27 +1,25 @@
 // require('dotenv').config({path:'./.env'});  
 // consistency ko break krta , lekin upr wale code me chl sb jayega but 
 //isse jyada ek aur hai 
-import { app } from "./app.js";
 import dotenv from "dotenv";
-import connectDB from "./db/index.js";
-dotenv.config({path:'./.env'});
- 
+import connectDB from "./db/index.js"; // or your DB connection file
+import { app } from "./app.js";
 
+// Load environment variables immediately
+dotenv.config({
+    path: './.env'
+});
+
+// Start the server only after DB is connected
 connectDB()
-.then(()=>{
-    app.listen(process.env.PORT || 8000,()=>{
-       console.log(`server is runnning at a port:${process.env.PORT}`);;
-         })
-          app.on("error", (error) => {
-           console.error("ERROR:", error);
-           throw error;
-  })
-
+.then(() => {
+    app.listen(process.env.PORT || 8000, () => {
+        console.log(`Server is running at port : ${process.env.PORT}`);
+    });
 })
-.catch((error)=>{
-    console.log("Mongo db connection error",error);
-    
-})
+.catch((err) => {
+    console.log("MONGO db connection failed !!! ", err);
+});
 
 
 
