@@ -54,6 +54,22 @@ const uploadOnCloudinary = async (localFilePath) => {
     }
 };
 
+
+/**
+ * Delete image from Cloudinary using public_id
+ */
+const deleteFromCloudinary = async (publicId) => {
+  try {
+    if (!publicId) return;
+    await cloudinary.uploader.destroy(publicId);
+  } catch (error) {
+    console.error("Cloudinary delete error:", error.message);
+  }
+};
+
+export { deleteFromCloudinary };
+
+
 export { uploadOnCloudinary };
 
 

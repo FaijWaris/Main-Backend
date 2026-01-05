@@ -197,10 +197,10 @@ const user = await User.findById( req.user?._id)
 
 const getCurrentUser = asyncHandler(async(req,res)=>{
   return res.status(200)
-  .json(200,req.user,"current user fetched succesfully")
+  .json(new ApiResponse(200,req.user,"current user fetched succesfully"))
 })
 
-const updateAccountDetails = asyncHandler(async(req,res)=>{
+const updateAccountDetails = asyncHandler(async(req,res)=>{ 
   const {fullname,email,} = req.body
   if (!fullname || !email) {
      throw new ApiError(400,"All fields are required")
@@ -212,8 +212,7 @@ const updateAccountDetails = asyncHandler(async(req,res)=>{
          email
       }
     },
-    {new : true}
-  ).select("-password")
+    {new : true}).select("-password")
   return res.status(200)
   .json(new ApiResponse(200,"account details updated successfully"))
 })
@@ -234,6 +233,12 @@ const updateUserAvatar = asyncHandler(async(req,res)=>{
       avatar:avatar.url
     }
   },{new:true}).select("-Password")
+    // 4️⃣ Delete old avatar from Cloudinary
+  if (oldAvatarUrl) {
+    const publicId = oldAvatarUrl.split("/").pop().split(".")[0];
+    await deleteFromCloudinary(publicId);
+  }
+
   return res.status(200)
   .json(new ApiResponse(200,user,"Avatar updated successfully"))
 
